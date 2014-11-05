@@ -6,7 +6,7 @@ module Pxfusion
       raise 'WHY U NO SET USERNAME AND PASSWORD?' unless @username && @password
       @return_url = return_url
       opts.merge! pretty_print_xml: true, log: true if debug
-      opts.merge! wsdl: end_point + '?wsdl'
+      opts.merge! wsdl: end_point + '?wsdl', filters: [:password] #doesnt actually filter password because we build our own xml
       @client     = Savon::client(opts)
     end
 
