@@ -1,4 +1,13 @@
 module Pxfusion
+
+  TRANSACTION_APPROVED           = '0'
+  TRANSACTION_DECLINED           = '1'
+  TRANSACTION_DECLINED_TRANSIENT = '2'
+  INVALID_DATA_SUBMITTED         = '3'
+  TRANSACTION_RESULT_UNAVAILABLE = '4'
+  TRANSACTION_CANCELLED          = '5'
+  TRANSACTION_NOT_FOUND          = '6'
+
   class Client
     def initialize(username: nil, password: nil, return_url:, end_point: 'https://sec.paymentexpress.com/pxf/pxf.svc', opts: {}, debug: false)
       @username   = username || ENV['PXFUSION_USERNAME']
@@ -43,13 +52,13 @@ module Pxfusion
 
     def status_description status
       case status
-      when '0' then 'Transaction approved'
-      when '1' then 'Transaction declined'
-      when '2' then 'Transaction declined due to transient error (retry advised)'
-      when '3' then 'Invalid data submitted in form post (alert site admin)'
-      when '4' then 'Transaction result cannot be determined at this time (re-run GetTransaction)'
-      when '5' then 'Transaction did not proceed due to being attempted after timeout timestamp or having been cancelled by a CancelTransaction call'
-      when '6' then 'No transaction found (SessionId query failed to return a transaction record – transaction not yet attempted)'
+      when TRANSACTION_APPROVED           then 'Transaction approved'
+      when TRANSACTION_DECLINED           then 'Transaction declined'
+      when TRANSACTION_DECLINED_TRANSIENT then 'Transaction declined due to transient error (retry advised)'
+      when INVALID_DATA_SUBMITTED         then 'Invalid data submitted in form post (alert site admin)'
+      when TRANSACTION_RESULT_UNAVAILABLE then 'Transaction result cannot be determined at this time (re-run GetTransaction)'
+      when TRANSACTION_CANCELLED          then 'Transaction did not proceed due to being attempted after timeout timestamp or having been cancelled by a CancelTransaction call'
+      when TRANSACTION_NOT_FOUND          then 'No transaction found (SessionId query failed to return a transaction record – transaction not yet attempted)'
       end
     end
 
