@@ -6,14 +6,15 @@ module Pxfusion
       raise 'WHY U NO SET USERNAME AND PASSWORD?' unless @username && @password
       @return_url = return_url
       opts.merge! pretty_print_xml: true, log: true if debug
-      opts.merge! wsdl: end_point + '?wsdl', filters: [:password] #doesnt actually filter password because we build our own xml
+      opts.merge! wsdl: end_point + '?wsdl', filters: [:password]
+      opts.merge! env_namespace: '', namespace: '', namespace_identifier: nil
       @client     = Savon::client(opts)
     end
 
 
     def get_session_id(amount:, txn_ref:, currency: 'NZD', txn_type: 'Purchase', return_url: nil, url_fillers:[], url_query:{})
       return_url = gen_return_url(base_url: return_url, fillers: url_fillers, query: url_query)
-      answer = @client.call(:get_transaction_id, xml: gen_get_txn_id_xml(amount, currency, txn_type, return_url))
+      answer = @client.call(:get_transaction_id, message: gen_get_txn_id_msg(amount, currency, txn_type, return_url), attributes: {xmlns: 'http://paymentexpress.com'})
       begin
         result = answer.body[:get_transaction_id_response][:get_transaction_id_result]
       rescue
@@ -25,8 +26,8 @@ module Pxfusion
 
 
     def get_transaction session_id
-      xml = gen_wrapper_xml 'GetTransaction', "<transactionId>#{session_id}</transactionId>"
-      answer = @client.call(:get_transaction, xml: xml)
+      msg = gen_wrapper_msg transaction_id: session_id
+      answer = @client.call(:get_transaction, message: msg, attributes: {xmlns: 'http://paymentexpress.com'})
       result = answer.body[:get_transaction_response][:get_transaction_result]
       result[:status_description] = status_description result[:status]
       result
@@ -34,8 +35,8 @@ module Pxfusion
 
 
     def cancel_transaction session_id
-      xml = gen_wrapper_xml 'CancelTransaction', "<transactionId>#{session_id}</transactionId>"
-      answer = @client.call(:cancel_transaction, xml: xml)
+      msg = gen_wrapper_msg transaction_id: session_id
+      answer = @client.call(:cancel_transaction, message: msg, attributes: {xmlns: 'http://paymentexpress.com'})
       answer.body[:cancel_transaction_response][:cancel_transaction_result]
     end
 
@@ -62,31 +63,24 @@ module Pxfusion
     end
 
 
-    def gen_get_txn_id_xml amount, currency, txn_type, return_url
-      content = <<-XML
-        <tranDetail>
-          <amount>#{'%.2f' % amount}</amount>
-          <currency>#{currency}</currency>
-          <returnUrl>#{return_url}</returnUrl>
-          <txnType>#{txn_type}</txnType>
-        </tranDetail>
-      XML
-      gen_wrapper_xml 'GetTransactionId', content
+    def gen_get_txn_id_msg amount, currency, txn_type, return_url
+      content = {
+        tran_detail: {
+          amount:     '%.2f' % amount,
+          currency:   currency,
+          return_url: return_url,
+          txn_type:   txn_type
+        }
+      }
+      gen_wrapper_msg content
     end
 
 
-    def gen_wrapper_xml action, content
-      <<-XML
-      <Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
-        <Body>
-          <#{action} xmlns="http://paymentexpress.com">
-            <username>#{@username}</username>
-            <password>#{@password}</password>
-            #{content}
-          </#{action}>
-        </Body>
-      </Envelope>
-      XML
+    def gen_wrapper_msg content
+      {
+        username: @username,
+        password: @password
+      }.merge content
     end
 
   end
