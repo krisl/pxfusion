@@ -1,5 +1,8 @@
 module Pxfusion
 
+  FORM_URL = 'https://sec.paymentexpress.com/pxmi3/pxfusionauth'
+  SOAP_URL = 'https://sec.paymentexpress.com/pxf/pxf.svc'
+
   TRANSACTION_APPROVED           = '0'
   TRANSACTION_DECLINED           = '1'
   TRANSACTION_DECLINED_TRANSIENT = '2'
@@ -9,7 +12,7 @@ module Pxfusion
   TRANSACTION_NOT_FOUND          = '6'
 
   class Client
-    def initialize(username: nil, password: nil, return_url:, end_point: 'https://sec.paymentexpress.com/pxf/pxf.svc', opts: {}, debug: false)
+    def initialize(username: nil, password: nil, return_url:, end_point: SOAP_URL, opts: {}, debug: false)
       @username   = username || ENV['PXFUSION_USERNAME']
       @password   = password || ENV['PXFUSION_PASSWORD']
       raise 'WHY U NO SET USERNAME AND PASSWORD?' unless @username && @password
