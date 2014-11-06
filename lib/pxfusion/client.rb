@@ -3,13 +3,15 @@ module Pxfusion
   FORM_URL = 'https://sec.paymentexpress.com/pxmi3/pxfusionauth'
   SOAP_URL = 'https://sec.paymentexpress.com/pxf/pxf.svc'
 
-  TRANSACTION_APPROVED           = '0'
-  TRANSACTION_DECLINED           = '1'
-  TRANSACTION_DECLINED_TRANSIENT = '2'
-  INVALID_DATA_SUBMITTED         = '3'
-  TRANSACTION_RESULT_UNAVAILABLE = '4'
-  TRANSACTION_CANCELLED          = '5'
-  TRANSACTION_NOT_FOUND          = '6'
+  STATUS_DESCRIPTIONS = {
+    TRANSACTION_APPROVED           = '0' => 'Transaction approved',
+    TRANSACTION_DECLINED           = '1' => 'Transaction declined',
+    TRANSACTION_DECLINED_TRANSIENT = '2' => 'Transaction declined due to transient error (retry advised)',
+    INVALID_DATA_SUBMITTED         = '3' => 'Invalid data submitted in form post (alert site admin)',
+    TRANSACTION_RESULT_UNAVAILABLE = '4' => 'Transaction result cannot be determined at this time (re-run GetTransaction)',
+    TRANSACTION_CANCELLED          = '5' => 'Transaction did not proceed due to being attempted after timeout timestamp or having been cancelled by a CancelTransaction call',
+    TRANSACTION_NOT_FOUND          = '6' => 'No transaction found (SessionId query failed to return a transaction record – transaction not yet attempted)',
+  }
 
   class Client
     def initialize(username: nil, password: nil, return_url:, end_point: SOAP_URL, opts: {}, debug: false)
@@ -40,7 +42,7 @@ module Pxfusion
     def get_transaction session_id
       answer = request(:get_transaction, transaction_id: session_id)
       result = answer.body[:get_transaction_response][:get_transaction_result]
-      result[:status_description] = status_description result[:status]
+      result[:status_description] = STATUS_DESCRIPTIONS[result[:status]]
       result
     end
 
@@ -48,19 +50,6 @@ module Pxfusion
     def cancel_transaction session_id
       answer = request(:cancel_transaction, transaction_id: session_id)
       answer.body[:cancel_transaction_response][:cancel_transaction_result]
-    end
-
-
-    def status_description status
-      case status
-      when TRANSACTION_APPROVED           then 'Transaction approved'
-      when TRANSACTION_DECLINED           then 'Transaction declined'
-      when TRANSACTION_DECLINED_TRANSIENT then 'Transaction declined due to transient error (retry advised)'
-      when INVALID_DATA_SUBMITTED         then 'Invalid data submitted in form post (alert site admin)'
-      when TRANSACTION_RESULT_UNAVAILABLE then 'Transaction result cannot be determined at this time (re-run GetTransaction)'
-      when TRANSACTION_CANCELLED          then 'Transaction did not proceed due to being attempted after timeout timestamp or having been cancelled by a CancelTransaction call'
-      when TRANSACTION_NOT_FOUND          then 'No transaction found (SessionId query failed to return a transaction record – transaction not yet attempted)'
-      end
     end
 
 
