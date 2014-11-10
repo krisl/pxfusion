@@ -28,7 +28,7 @@ module Pxfusion
 
     def get_session_id(amount:, txn_ref:, currency: 'NZD', txn_type: 'Purchase', return_url: nil, url_fillers:[], url_query:{})
       return_url = gen_return_url(base_url: return_url, fillers: url_fillers, query: url_query)
-      answer = request(:get_transaction_id, gen_get_txn_id_msg(amount, currency, txn_type, return_url))
+      answer = request(:get_transaction_id, gen_get_txn_id_msg(amount, currency, txn_type, return_url, txn_ref))
       begin
         result = answer.body[:get_transaction_id_response][:get_transaction_id_result]
       rescue
@@ -65,12 +65,13 @@ module Pxfusion
       @client.call name, message: auth_wrap(details), attributes: {xmlns: 'http://paymentexpress.com'}
     end
 
-    def gen_get_txn_id_msg amount, currency, txn_type, return_url
+    def gen_get_txn_id_msg amount, currency, txn_type, return_url, txn_ref
       {
         tran_detail: {
           amount:     '%.2f' % amount,
           currency:   currency,
           return_url: return_url,
+          txn_ref:    txn_ref,
           txn_type:   txn_type
         }
       }
